@@ -19,6 +19,7 @@ WHITE_GREY = (250, 250, 250)
 
 # Initialize the pygame
 pygame.init()
+pygame.mixer.pre_init(44100, -16, 1, 512)
 
 # Create the screen
 screen = pygame.display.set_mode((SCREEN_LENGTH, SCREEN_WIDTH))
@@ -46,6 +47,8 @@ class Player:
         mouse_pos = pygame.mouse.get_pos()
         mouse_pos_x = mouse_pos[0]
         mouse_pos_y = mouse_pos[1]
+        hit_sound = pygame.mixer.Sound('sounds/select.ogg')
+        hit_sound.set_volume(0.1)
 
         distance = math.sqrt((mouse_pos_x - self.x) ** 2 +
                              (self.y - mouse_pos_y) ** 2)  # Distance between the ball and the mouse
@@ -59,9 +62,11 @@ class Player:
         lineX_end = mouse_pos_x
         lineY_end = mouse_pos_y
 
-        if lineY_end >= BALL_MAX_Y:
-            lineY_end = BALL_MAX_Y
+        # Stop the line when hitting the ground
+        if lineY_end >= BALL_MAX_Y + 25:
+            lineY_end = BALL_MAX_Y + 25
 
+        # When the ball is stopped and ready for the next move, draw a line
         if self.is_ready:
             pygame.draw.line(screen, WHITE_GREY, (lineX_start, lineY_start), (lineX_end, lineY_end), LINE_WIDTH)
 
@@ -72,13 +77,15 @@ class Player:
             srcY = lineY_start
             dstX = lineX_end
             dstY = lineY_end
-            self.velX = (dstX - srcX) / GRAVITY
-            self.velY = (srcY - dstY) / GRAVITY * 1.2
+            self.velX = (dstX - srcX) / 5
+            self.velY = (srcY - dstY) / 5
 
+        # While the ball is moving
         if self.is_ready is False:
             self.x += self.velX
             self.y -= self.velY
 
+            # Lower the x speed
             if self.velX > 1:
                 self.velX -= FRICTION * self.mass
             elif self.velX < -1:
@@ -86,15 +93,20 @@ class Player:
             elif 1 > self.velX > -1:
                 self.velX = 0
 
+            # If the ball touches the ground
             if self.y < BALL_MAX_Y:
                 self.velY -= self.mass * GRAVITY
             if self.y > BALL_MAX_Y:
+                hit_sound.play()
                 self.velY = -self.velY - self.mass * GRAVITY
                 self.y = BALL_MAX_Y
 
+            # If the ball touches one of the x borders
             if self.x <= 20 or self.x >= 1150:  # Borders of the x board
+                hit_sound.play()
                 self.velX = -self.velX
 
+            # Check if the ball stopped in the ground
             if self.y == BALL_MAX_Y and self.velX == 0 and self.velY < 1:
                 if self.is_set_timer is False:
                     self.last = pygame.time.get_ticks()
@@ -103,9 +115,10 @@ class Player:
                 if self.is_set_timer is True:
                     now = pygame.time.get_ticks()
                     if now - self.last >= self.cool_down:
-                        timer = now
+                        self.last = now
                         self.is_ready = True
                         self.is_set_timer = False
+                        hit_sound.stop()
 
 
 def init_background():
