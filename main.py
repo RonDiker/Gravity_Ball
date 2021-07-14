@@ -1,5 +1,6 @@
 import pygame
 import math
+import time
 
 SCREEN_LENGTH = 1200
 SCREEN_WIDTH = 800
@@ -19,13 +20,19 @@ WHITE_GREY = (250, 250, 250)
 
 # Initialize the pygame
 pygame.init()
+pygame.font.init()
 pygame.mixer.pre_init(44100, -16, 1, 512)
+
+# Fonts
+B_FONT = pygame.font.SysFont('Comic Sans MS', 45)
 
 # Create the screen
 screen = pygame.display.set_mode((SCREEN_LENGTH, SCREEN_WIDTH))
 
 # Icon and title
 pygame.display.set_caption("Gravity Ball")
+programIcon = pygame.image.load('images/ball.png')
+pygame.display.set_icon(programIcon)
 
 
 # Player
@@ -127,8 +134,43 @@ def init_background():
     screen.blit(ground, (0, 200))  # Make the ground visible in the display
 
 
+def main_menu():
+    result = 2
+    select_sound = pygame.mixer.Sound('sounds/click.wav')
+    select_sound.set_volume(0.1)
+
+    main_menu_start_button = pygame.Rect(400, 200, 400, 75)
+    main_menu_quit_button = pygame.Rect(400, 300, 400, 75)
+
+    start_txt = B_FONT.render('Start', False, WHITE_GREY)
+    quit_txt = B_FONT.render('Quit', False, WHITE_GREY)
+
+    # Start button
+    if main_menu_start_button.collidepoint(pygame.mouse.get_pos()):
+        pygame.draw.rect(screen, [70, 101, 99], main_menu_start_button)
+        if pygame.mouse.get_pressed(3)[0]:
+            select_sound.play()
+            result = 1
+    else:
+        pygame.draw.rect(screen, [60, 91, 89], main_menu_start_button)
+
+    if main_menu_quit_button.collidepoint(pygame.mouse.get_pos()):
+        pygame.draw.rect(screen, [70, 101, 99], main_menu_quit_button)
+        if pygame.mouse.get_pressed(3)[0]:
+            select_sound.play()
+            result = 0
+    else:
+        pygame.draw.rect(screen, [60, 91, 89], main_menu_quit_button)
+
+    screen.blit(start_txt, (550, 200))
+    screen.blit(quit_txt, (555, 300))
+
+    return result
+
+
 def main():
     is_running = True
+    is_menu = True
     player = Player()
 
     # Game loop
@@ -141,8 +183,18 @@ def main():
         init_background()  # Draw the background
         screen.blit(player.img, (player.x, player.y))  # Make the player visible in the display
 
-        # Movement
-        player.movement()
+        if is_menu:  # Main menu
+            if main_menu() == 1:  # Start
+                is_menu = False
+                time.sleep(0.2)  # little delay before we start the game
+            elif main_menu() == 2:  # None
+                is_menu = True
+            else:  # Quit
+                is_running = False
+
+        else:  # Game
+            # Movement
+            player.movement()
 
         pygame.display.update()  # updates the display
 
