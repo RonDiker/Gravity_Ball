@@ -54,6 +54,7 @@ class Player:
         self.cool_down = 1000
         self.is_set_timer = False
         self.coins = 0
+        self.high_score = 0
 
     def movement(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -134,7 +135,23 @@ class Player:
 
     def update_score(self):
         score_txt = B_FONT.render('Score is: ' + str(self.coins), False, WHITE_GREY)
+        high_score_txt = B_FONT.render('High score is: ' + str(self.high_score), False, WHITE_GREY)
         screen.blit(score_txt, (5, 5))
+        screen.blit(high_score_txt, (300, 5))
+        if self.coins > int(self.high_score):
+            self.set_high_score(self.coins)
+
+    def get_high_score(self):
+        high_score_file = open("Score.txt", "r")
+        high_score = high_score_file.read()
+        self.high_score = int(str(high_score))
+        high_score_file.close()
+
+    def set_high_score(self, new_score):
+        high_score_file = open("Score.txt", "w")
+        high_score_file.write(str(new_score))
+        high_score_file.close()
+        self.high_score = new_score
 
 
 class Coin:
@@ -161,7 +178,7 @@ class Coin:
         elif player_col.colliderect(coin_col):
             player.coins += 1
             self.is_taken = True
-            self.x = -100
+            self.x = -1000
 
         screen.blit(self.img, (self.x, self.y))
 
@@ -211,6 +228,8 @@ def main():
     is_menu = True
     player = Player()
     coin = Coin()
+
+    player.get_high_score()
 
     # Game loop
     while is_running is True:
