@@ -1,6 +1,7 @@
 import pygame
 import math
 import time
+import random
 
 SCREEN_LENGTH = 1200
 SCREEN_WIDTH = 800
@@ -8,6 +9,9 @@ SCREEN_WIDTH = 800
 BALL_LENGTH = 50
 BALL_WIDTH = 50
 BALL_MAX_Y = 728
+
+COIN_LENGTH = 75
+COIN_WIDTH = 75
 
 LINE_WIDTH = 3
 
@@ -49,6 +53,7 @@ class Player:
         self.last = pygame.time.get_ticks()
         self.cool_down = 1000
         self.is_set_timer = False
+        self.coins = 0
 
     def movement(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -127,6 +132,39 @@ class Player:
                         self.is_set_timer = False
                         hit_sound.stop()
 
+    def update_score(self):
+        score_txt = B_FONT.render('Score is: ' + str(self.coins), False, WHITE_GREY)
+        screen.blit(score_txt, (5, 5))
+
+
+class Coin:
+    def __init__(self):
+        self.img = pygame.transform.scale(
+            pygame.image.load('images/coin.png').convert_alpha(), (COIN_LENGTH, COIN_WIDTH))
+        self.x = random.randrange(100, 1100)
+        self.y = random.randrange(100, BALL_MAX_Y - 100)
+        self.is_taken = False
+
+    def coin_master(self, player):
+        # Draw a box collider on the player sprite
+        player_col = pygame.Rect(player.x, player.y, BALL_LENGTH, BALL_WIDTH)
+        pygame.draw.rect(screen, [0, 0, 0, 255], player_col, 1)
+        # Draw a box collider on the coin sprite
+        coin_col = pygame.Rect(self.x, self.y, COIN_LENGTH, COIN_WIDTH)
+        pygame.draw.rect(screen, [0, 0, 0, 255], coin_col, 1)
+
+        if self.is_taken and player.is_ready:
+            self.x = random.randrange(100, 1100)
+            self.y = random.randrange(100, BALL_MAX_Y - 100)
+            self.is_taken = False
+
+        elif player_col.colliderect(coin_col):
+            player.coins += 1
+            self.is_taken = True
+            self.x = -100
+
+        screen.blit(self.img, (self.x, self.y))
+
 
 def init_background():
     screen.fill(BLUE)  # Set the background color to blue
@@ -172,6 +210,7 @@ def main():
     is_running = True
     is_menu = True
     player = Player()
+    coin = Coin()
 
     # Game loop
     while is_running is True:
@@ -193,8 +232,9 @@ def main():
                 is_running = False
 
         else:  # Game
-            # Movement
-            player.movement()
+            player.movement()  # Movement
+            player.update_score()  # Update the score
+            coin.coin_master(player)  # Coin
 
         pygame.display.update()  # updates the display
 
