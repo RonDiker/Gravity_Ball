@@ -136,7 +136,7 @@ def init_background():
 
 def main_menu():
     result = 2
-    select_sound = pygame.mixer.Sound('sounds/click.wav')
+    select_sound = pygame.mixer.Sound('sounds/got_coin.wav')
     select_sound.set_volume(0.1)
 
     main_menu_start_button = pygame.Rect(400, 200, 400, 75)
